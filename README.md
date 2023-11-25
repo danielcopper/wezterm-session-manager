@@ -53,6 +53,11 @@ and restore different sessions or better workspaces and later restore them.
    }
    ```
 
+5. I also recommend to set up a keybinding for creating **named** workspaces as
+   explained
+   [here](https://wezfurlong.org/wezterm/config/lua/keyassignment/SwitchToWorkspace.html).
+   This helps managing and switching states.
+
 ## Limitations
 
 There are currently some limitations and improvements that need to be
