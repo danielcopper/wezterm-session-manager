@@ -27,7 +27,7 @@ and restore different sessions or better workspaces and later restore them.
    Manager:
 
    ```lua
-   local session-manager = require("wezterm-session-manager")
+   local session_manager = require("wezterm-session-manager")
    ```
 
 3. **Setup Event Bindings:** Edit your 'wezterm.lua' to include the event
