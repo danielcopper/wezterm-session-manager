@@ -72,6 +72,16 @@ end
 --- Recreates the workspace based on the provided data.
 -- @param workspace_data table: The data structure containing the saved workspace state.
 local function recreate_workspace(window, workspace_data)
+  local function extract_path_from_dir(is_windows, working_directory)
+      if is_windows then
+        -- On Windows, transform 'file:///C:/path/to/dir' to 'C:/path/to/dir'
+        return working_directory:gsub("file///", "")
+      else
+        -- On Linux, transform 'file://{computer-name}/home/{user}/path/to/dir' to '/home/{user}/path/to/dir'
+        return working_directory:gsub("^.*(/home/)", "/home/")
+      end
+    end
+
   if not workspace_data or not workspace_data.tabs then
     wezterm.log_info("Invalid or empty workspace data provided.")
     return
@@ -100,17 +110,9 @@ local function recreate_workspace(window, workspace_data)
   -- should work for windows and linux
   local is_windows = wezterm.target_triple:find("windows") ~= nil
 
-  for i, tab_data in ipairs(workspace_data.tabs) do
+  for _, tab_data in ipairs(workspace_data.tabs) do
     local cwd_uri = tab_data.panes[1].cwd
-    local cwd_path
-
-    if is_windows then
-      -- On Windows, transform 'file:///C:/path/to/dir' to 'C:/path/to/dir'
-      cwd_path = cwd_uri:gsub("file:///", "")
-    else
-      -- On Linux, transform 'file:///path/to/dir' to '/path/to/dir'
-      cwd_path = cwd_uri:gsub("file://", "")
-    end
+    local cwd_path = extract_path_from_dir(is_windows, cwd_uri)
 
     local new_tab = window:mux_window():spawn_tab({ cwd = cwd_path })
 
@@ -133,7 +135,10 @@ local function recreate_workspace(window, workspace_data)
           direction = 'Bottom'
         end
 
-        new_pane = new_tab:active_pane():split({ direction = direction, cwd = pane_data.cwd:gsub("file:///", "") })
+        new_pane = new_tab:active_pane():split({
+          direction = direction,
+          cwd = extract_path_from_dir(is_windows, pane_data.cwd)
+        })
       end
 
       if not new_pane then
