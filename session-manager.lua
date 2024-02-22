@@ -1,6 +1,7 @@
 local wezterm = require("wezterm")
 local session_manager = {}
 
+local os = wezterm.target_triple:find("windows") ~= nil
 --- Displays a notification in WezTerm.
 -- @param message string: The notification message to be displayed.
 local function display_notification(message)
@@ -72,13 +73,15 @@ end
 --- Recreates the workspace based on the provided data.
 -- @param workspace_data table: The data structure containing the saved workspace state.
 local function recreate_workspace(window, workspace_data)
-  local function extract_path_from_dir(is_windows, working_directory)
-      if is_windows then
+  local function extract_path_from_dir(working_directory)
+      if os == "x86_64-pc-windows-msvc" then
         -- On Windows, transform 'file:///C:/path/to/dir' to 'C:/path/to/dir'
         return working_directory:gsub("file///", "")
-      else
+      elseif os == "x86_64-unknown-linux-gnu" then
         -- On Linux, transform 'file://{computer-name}/home/{user}/path/to/dir' to '/home/{user}/path/to/dir'
         return working_directory:gsub("^.*(/home/)", "/home/")
+      else
+        return working_directory:gsub("^.*(/Users/)", "/Users/")
       end
     end
 
@@ -107,15 +110,11 @@ local function recreate_workspace(window, workspace_data)
   end
 
   -- Recreate tabs and panes from the saved state
-  -- should work for windows and linux
-  local is_windows = wezterm.target_triple:find("windows") ~= nil
-
   for _, tab_data in ipairs(workspace_data.tabs) do
     local cwd_uri = tab_data.panes[1].cwd
-    local cwd_path = extract_path_from_dir(is_windows, cwd_uri)
+    local cwd_path = extract_path_from_dir(cwd_uri)
 
     local new_tab = window:mux_window():spawn_tab({ cwd = cwd_path })
-
     if not new_tab then
       wezterm.log_info("Failed to create a new tab.")
       break
@@ -137,7 +136,7 @@ local function recreate_workspace(window, workspace_data)
 
         new_pane = new_tab:active_pane():split({
           direction = direction,
-          cwd = extract_path_from_dir(is_windows, pane_data.cwd)
+          cwd = extract_path_from_dir(pane_data.cwd)
         })
       end
 
@@ -149,8 +148,13 @@ local function recreate_workspace(window, workspace_data)
       -- Restore TTY for Neovim on Linux
       -- NOTE: cwd is handled differently on windows. maybe extend functionality for windows later
       -- This could probably be handled better in general
-      if not is_windows and pane_data.tty == "/usr/bin/nvim" then
-        new_pane:send_text(pane_data.tty .. " ." .. "\n")
+      if not (os == "x86_64-pc-windows-msvc") then 
+        if not (os == "x86_64-pc-windows-msvc") and pane_data.tty:sub(-#"/bin/nvim") == "/bin/nvim" then
+            new_pane:send_text(pane_data.tty .. " ." .. "\n")
+        else
+            -- TODO - With running npm commands (e.g a running web client) this seems to execute Node, without the arguments 
+            new_pane:send_text(pane_data.tty .. "\n")
+        end
       end
     end
   end
