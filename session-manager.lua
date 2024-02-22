@@ -1,7 +1,7 @@
 local wezterm = require("wezterm")
 local session_manager = {}
 
-local os = wezterm.target_triple:find("windows") ~= nil
+local os = wezterm.target_triple
 --- Displays a notification in WezTerm.
 -- @param message string: The notification message to be displayed.
 local function display_notification(message)
