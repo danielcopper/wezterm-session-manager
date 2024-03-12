@@ -76,7 +76,7 @@ local function recreate_workspace(window, workspace_data)
   local function extract_path_from_dir(working_directory)
     if os == "x86_64-pc-windows-msvc" then
       -- On Windows, transform 'file:///C:/path/to/dir' to 'C:/path/to/dir'
-      return working_directory:gsub("file///", "")
+      return working_directory:gsub("file:///", "")
     elseif os == "x86_64-unknown-linux-gnu" then
       -- On Linux, transform 'file://{computer-name}/home/{user}/path/to/dir' to '/home/{user}/path/to/dir'
       return working_directory:gsub("^.*(/home/)", "/home/")
