@@ -58,6 +58,19 @@ and restore different sessions or better workspaces and later restore them.
    [here](https://wezfurlong.org/wezterm/config/lua/keyassignment/SwitchToWorkspace.html).
    This helps managing and switching states.
 
+6. Optionally, load the previous configuration using the `gui-startup` event:
+
+   ```lua
+   local mux = wezterm.mux
+   wezterm.on("gui-startup", function(cmd)
+     local tab, pane, window = mux.spawn_window(cmd or {})
+     -- maximize window when open
+     -- window:gui_window():maximize()
+     -- restore previous session state
+     session_manager.restore_state(window:gui_window())
+   end)
+   ```
+   
 ## Limitations
 
 There are currently some limitations and improvements that need to be
